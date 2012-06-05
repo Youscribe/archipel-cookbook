@@ -1,5 +1,5 @@
 include_recipe "build-essential"
-include_recipe "python"
+include_recipe "python::package"
 
 packages = value_for_platform(
 	["ubuntu"] => {
