@@ -5,4 +5,4 @@
 # Copyright 2012, YOUR_COMPANY_NAME
 #
 
-include_recipe "archipel::install-agent"
+include_recipe "archipel::install_agent"
