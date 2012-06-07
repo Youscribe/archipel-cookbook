@@ -57,15 +57,14 @@ else
 end
 
 ruby_block "generate uuid" do
-		block do
-			require 'uuidtools'
-			uuid = UUIDTools::UUID.random_create
-			node['archipel']['uuid'] = uuid
-			node.save
-		end
-		# TODO generate with specif BITS
-#		notifies(:reload, "service[tinc]")
-		not_if { node['archipel'].has_key?('uuid') }
+	block do
+		require 'uuidtools'
+		uuid = UUIDTools::UUID.random_create
+		node['archipel']['uuid'] = uuid
+		node.save
+	end
+	not_if { node['archipel'].has_key?('uuid') }
+	notifies(:restart, "service[archipel]")
 end
 
 ruby_block "generate password" do
@@ -75,7 +74,30 @@ ruby_block "generate password" do
 		node.save
 	end
 	not_if { node['archipel'].has_key?('hypervisor_password') }
+	notifies(:restart, "service[archipel]")
 end
+
+ruby_block "generate key" do
+	block do
+		require 'openssl'
+		rsa_key = OpenSSL::PKey::RSA.new 4096
+		cert = OpenSSL::X509::Certificate.new
+		cert.version = 2
+		cert.serial = 1
+		#OpenSSL::X509::Name.parse("/C=FR/ST=Ile-De-France/L=Paris/O=Youscribe/OU=IT/CN=youscribe.com/emailAddress=guilhem.lettron@youscribe.com")
+		#cert.subject = ca
+		#cert.issuer = ca
+		cert.public_key = rsa_key.public_key
+		cert.not_before = Time.now
+		cert.not_after = Time.now + 2 * 365 * 24 * 60 * 60 # 2 years validity
+		File.open("/etc/archipel/vnc.pem", "w") { |f| f.chmod(0600); f.write(rsa_key.to_pem + cert.to_pem) }
+		node['archipel']['vnc_cert_expire'] = cert.not_after
+		node.save
+	end
+	not_if { node['archipel'].has_key?('vnc_cert_expire') and Time.now > node['archipel']['vnc_cert_expire'] }
+	notifies(:restart, "service[archipel]")
+end
+
 
 template "/etc/archipel/archipel.conf" do
 	source "archipel.conf.erb"
@@ -83,8 +105,10 @@ template "/etc/archipel/archipel.conf" do
 		'xmpp_server' => node['archipel']['xmpp_server'],
 		'uuid' => node['archipel']['uuid'],
 		'hypervisor_name' => node['archipel']['hypervisor_name'],
-		'hypervisor_password' => node['archipel']['hypervisor_password']
+		'hypervisor_password' => node['archipel']['hypervisor_password'],
+		'ip' => node['archipel']['ipaddress']
 	)
+	notifies(:restart, "service[archipel]")
 end
 
 # Sercvice installation

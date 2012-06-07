@@ -1,5 +1,6 @@
 default['archipel']['xmpp_server'] = nil # MUST be SET
 default['archipel']['hypervisor_name'] = node['hostname']
+default['archipel']['ip'] = node['ipaddress']
 #default['archipel']['hypervisor_password']
 #default['archipel']['uuid']
 
