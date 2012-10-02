@@ -112,7 +112,7 @@ template "/etc/archipel/archipel.conf" do
 		'uuid' => node['archipel']['uuid'],
 		'hypervisor_name' => node['archipel']['hypervisor_name'],
 		'hypervisor_password' => node['archipel']['hypervisor_password'],
-		'ip' => node['archipel']['ipaddress']
+		'ip' => node['archipel']['ip']
 	)
 	notifies(:restart, "service[archipel]")
 end
