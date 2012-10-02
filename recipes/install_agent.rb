@@ -15,9 +15,15 @@ packages.each do |pkg|
 	end
 end
 
-package "archipel-agent" do
-	provider Chef::Provider::Package::EasyInstall
-	action :install
+if node['chef_packages']['chef']['version'] <= "10.14.4" #CHEF-2320
+  bash "install archipel-agent" do
+    code "easy_install archipel-agent"
+  end
+else
+  package "archipel-agent" do
+    provider Chef::Provider::Package::EasyInstall
+    action :install
+  end
 end
 
 directories = %w{
@@ -91,10 +97,10 @@ ruby_block "generate key" do
 		cert.not_before = Time.now
 		cert.not_after = Time.now + 2 * 365 * 24 * 60 * 60 # 2 years validity
 		File.open("/etc/archipel/vnc.pem", "w") { |f| f.chmod(0600); f.write(rsa_key.to_pem + cert.to_pem) }
-		node['archipel']['vnc_cert_expire'] = cert.not_after
+		node['archipel']['vnc_cert_expire'] = cert.not_after.to_i
 		node.save
 	end
-	not_if { node['archipel'].has_key?('vnc_cert_expire') and Time.now > node['archipel']['vnc_cert_expire'] }
+	not_if { node['archipel'].has_key?('vnc_cert_expire') and Time.now < Time.at(node['archipel']['vnc_cert_expire']) }
 	notifies(:restart, "service[archipel]")
 end
 
