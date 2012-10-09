@@ -15,16 +15,15 @@ packages.each do |pkg|
 	end
 end
 
-if node['chef_packages']['chef']['version'] <= "10.14.4" #CHEF-2320
-  bash "install archipel-agent" do
-    code "easy_install archipel-agent"
-  end
-else
-  package "archipel-agent" do
-    provider Chef::Provider::Package::EasyInstall
+#if node['chef_packages']['chef']['version'] <= "10.14.4" #CHEF-2320
+#  bash "install archipel-agent" do
+##    code "easy_install archipel-agent"
+#  end
+#else
+  easy_install_package "archipel-agent" do
     action :install
   end
-end
+#end
 
 directories = %w{
 	/var/lib/archipel/
